@@ -26,6 +26,15 @@ const std::string fragment_shader_source = R"(
         }
     )";
 
+const std::string fragment_shader_source_red = R"(
+        #version 330 core
+        out vec4 FragColor;
+        void main()
+        {
+            FragColor = vec4(1.0f, 0.f, 0.f, 1.0f);
+        }
+    )";
+
 int main() {
 
     // glfw: initialize and configure
@@ -74,8 +83,21 @@ int main() {
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
-    glDeleteShader(vertexShader);
+    //glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+
+    //red frag shader
+    unsigned int redFragShader = glCreateShader(GL_FRAGMENT_SHADER);
+    const char* redFragShaderCode = fragment_shader_source_red.c_str();
+    glShaderSource(redFragShader, 1, &redFragShaderCode, NULL);
+    glCompileShader(redFragShader);
+
+    unsigned int redShaderProgram = glCreateProgram();
+    glAttachShader(redShaderProgram, vertexShader);
+    glAttachShader(redShaderProgram, redFragShader);
+    glLinkProgram(redShaderProgram);
+    glDeleteShader(vertexShader);
+    glDeleteShader(redFragShader);
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -92,6 +114,17 @@ int main() {
         1, 2, 3 // second triangle
     };
 
+    float triangleVertices[] = {
+        -0.5f, -0.5f, 0.1f,
+        0.5f, -0.5f, 0.1f,
+        0.0f, 0.5f, 0.1f
+    };
+
+    //VBO - Moves your vertex data from CPU memory to GPU memory, the GPU can only work with whats already in its own memory, fast access once its there
+    //VAO - Once the data is on the GPU, OpenGL still doesnt know how to read it, are those numbers positions? colors? how many per vertex? The VAO stores that answer.
+    //EBO - Lets you reuse vertices. Instead of repeating shared corners, you write each vertex once and reference them by number. A rectangle needs 4 vertices, not 6.
+    //Vertex shader - Runs once per vertex. It's job: take a 3D point and figure out where it lands on your 2D screen
+
     unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -104,6 +137,19 @@ int main() {
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    //second triangle
+    unsigned int secondTriangleVBO, secondTriangleVAO;
+    glGenVertexArrays(1, &secondTriangleVAO);
+    glGenBuffers(1, &secondTriangleVBO);
+
+    glBindVertexArray(secondTriangleVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, secondTriangleVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVertices), triangleVertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -124,11 +170,15 @@ int main() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // draw our first triangle
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         glDrawElements(GL_TRIANGLES,6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
+
+        //drawing triangle old way
+        glUseProgram(redShaderProgram);
+        glBindVertexArray(secondTriangleVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
