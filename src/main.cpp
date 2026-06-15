@@ -81,8 +81,11 @@ int main() {
     // ------------------------------------------------------------------
     float vertices[] ={
         -0.5f, -0.5f, 0.0f, // left
-         0.5f, -0.5f, 0.0f, // right
-         0.0f,  0.5f, 0.0f  // top
+         0.0f,  0.5f, 0.0f,  // top
+         0.5f, -0.5f, 0.0f, // first triangle right / second triangle left
+
+         1.f, -0.5f, 0.0f, //second triangle right
+         1.f, 0.5f, 0.0f // second triangle top
     };
 
     unsigned int VBO, VAO;
@@ -114,6 +117,7 @@ int main() {
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLES, 2, 3);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
